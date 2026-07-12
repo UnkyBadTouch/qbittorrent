@@ -5,7 +5,7 @@ cd "$DIR"
 SESSION="claude_$NAME"
 
 if screen -ls | grep -q "[.]${SESSION}[[:space:]]"; then
-    screen -dr "$SESSION"
+    screen -rd "$SESSION"
 else
     screen -S "$SESSION" claude
 fi
