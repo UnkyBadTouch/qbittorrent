@@ -1,0 +1,22 @@
+{
+	"name": "blackout/qbbittorrent",
+	"description": "Reusable qBittorrent client with UTF-8 safe handling",
+	"type": "library",
+	"require":
+	{
+		"php": ">=7.2",
+		"guzzlehttp/guzzle": "^7.0",
+		"ext-mbstring": "*",
+		"hassankhan/config": "^3.2",
+		"monolog/monolog": "^3.10",
+		"symfony/console": "^8.0",
+		"symfony/process": "^8.0"
+	},
+	"autoload":
+	{
+		"psr-4":
+		{
+			"Blackout\\": "src/"
+		}
+	}
+}
