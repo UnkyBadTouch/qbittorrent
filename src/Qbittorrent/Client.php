@@ -50,7 +50,7 @@ public function __construct(string $baseUri, string $username, string $password)
 	[
 		'base_uri' => rtrim($this->baseUri, '/') . '/',
 		'timeout'  => 10,
-		'verify'   => false,
+		'verify'   => true,
 	]);
 
 	if (file_exists($this->cookies_cache))
