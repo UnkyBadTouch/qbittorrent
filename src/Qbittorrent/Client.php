@@ -249,6 +249,111 @@ class Client
 		]);
 	}
 
+	/**
+	 * Import cookies from a Chrome or Firefox cookie SQLite file (browser
+	 * must be closed — it locks the file) for the given domain(s), and push
+	 * them to qBittorrent via setCookies.
+	 *
+	 * Chrome stores cookie values encrypted; only already-decrypted (plain)
+	 * values are imported. Firefox values are plaintext.
+	 *
+	 * @param string|array<string> $domains
+	 * @return Cookie[] the imported cookies
+	 */
+	public function importBrowserCookies(string $file, string|array $domains): array
+	{
+		$domains = (array) $domains;
+
+		$db = new \PDO('sqlite:' . $file, options: [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
+
+		$tables = $db->query("SELECT name FROM sqlite_master WHERE type='table'")
+			->fetchAll(\PDO::FETCH_COLUMN);
+
+		if (in_array('moz_cookies', $tables, true))
+		{
+			// Firefox: expiry is seconds since epoch
+			$sql = 'SELECT host AS domain, name, value, path, expiry AS expirationDate FROM moz_cookies';
+		}
+		elseif (in_array('cookies', $tables, true))
+		{
+			// Chrome: expires_utc is microseconds since 1601-01-01,
+			// value is empty when encrypted_value holds the real (encrypted) data
+			$chrome = true;
+			$sql = "SELECT host_key AS domain, name, value, encrypted_value, path,
+				(expires_utc / 1000000 - 11644473600) AS expirationDate
+				FROM cookies";
+		}
+		else
+		{
+			throw new \Exception("Unrecognized cookie database: {$file}");
+		}
+
+		$where = implode(' OR ', array_fill(0, count($domains), 'domain LIKE ?'));
+		$stmt  = $db->prepare("{$sql} WHERE {$where}");
+		$stmt->execute(array_map(fn ($d) => '%' . ltrim($d, '.') . '%', $domains));
+
+		$key = isset($chrome) ? $this->chromeCookieKey() : null;
+
+		$cookies = [];
+
+		foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row)
+		{
+			if (isset($chrome) && $row['value'] === '' && $row['encrypted_value'] !== '')
+			{
+				$row['value'] = $this->decryptChromeCookie($row['encrypted_value'], $key);
+			}
+
+			unset($row['encrypted_value']);
+
+			$cookies[] = new Cookie($row);
+		}
+
+		if ($cookies !== [])
+		{
+			$this->setCookies($cookies);
+		}
+
+		return $cookies;
+	}
+
+	/** Derive the Chrome (Linux) cookie AES key from the keyring password. */
+	private function chromeCookieKey(): string
+	{
+		// Chrome's key store password: keyring via secret-tool, else the "peanuts" default
+		$password = @shell_exec(
+			'secret-tool lookup application chrome 2>/dev/null'
+		) ?: 'peanuts';
+
+		return hash_pbkdf2('sha1', trim($password), 'saltysalt', 1, 16, true);
+	}
+
+	/** Decrypt a Chrome v10/v11 (Linux) encrypted_value blob. */
+	private function decryptChromeCookie(string $encrypted, string $key): string
+	{
+		if (!str_starts_with($encrypted, 'v10') && !str_starts_with($encrypted, 'v11'))
+		{
+			return ''; // unknown scheme (e.g. Windows DPAPI) — not handled
+		}
+
+		$plain = openssl_decrypt(
+			substr($encrypted, 3),
+			'aes-128-cbc',
+			$key,
+			OPENSSL_RAW_DATA,
+			str_repeat(' ', 16),
+		);
+
+		if ($plain === false)
+		{
+			return '';
+		}
+
+		// Chrome 130+ prepends a 32-byte SHA256 of the host; strip it if present
+		return strlen($plain) > 32 && !ctype_print(substr($plain, 0, 32))
+			? substr($plain, 32)
+			: $plain;
+	}
+
 	public function getPreferences(): Preferences
 	{
 		return $this->requestDto('GET', '/api/v2/app/preferences', Preferences::class);
