@@ -12,6 +12,7 @@ use Blackout\Qbittorrent\DTO\Torrent\Piece;
 use Blackout\Qbittorrent\DTO\Category;
 use Blackout\Qbittorrent\DTO\Preferences;
 use Blackout\Qbittorrent\DTO\BuildInfo;
+use Blackout\Qbittorrent\DTO\Cookie;
 use Blackout\Qbittorrent\DTO\Transfer;
 use Blackout\Qbittorrent\DTO\MainData;
 use Blackout\Qbittorrent\DTO\Rss\Rule;
@@ -229,16 +230,21 @@ public function getDefaultSavePath(): string
 	return $this->requestRaw('GET', '/api/v2/app/defaultSavePath');
 }
 
+/** @return Cookie[] */
 public function getCookies(): array
 {
-	return $this->request('GET', '/api/v2/app/cookies');
+	return $this->requestDto('GET', '/api/v2/app/cookies', Cookie::class);
 }
 
+/** @param array<Cookie|array> $cookies */
 public function setCookies(array $cookies)
 {
 	return $this->request('POST', '/api/v2/app/setCookies', [
 		'form_params' => [
-			'cookies' => json_encode($cookies),
+			'cookies' => json_encode(array_map(
+				fn ($c) => $c instanceof Cookie ? $c : new Cookie($c),
+				$cookies,
+			)),
 		],
 	]);
 }
