@@ -236,6 +236,12 @@ class Client
 		return $this->requestDto('GET', '/api/v2/app/cookies', Cookie::class);
 	}
 
+	/** Empty the qBittorrent cookie store. */
+	public function clearCookies()
+	{
+		return $this->setCookies([], merge: false);
+	}
+
 	/**
 	 * The setCookies endpoint replaces the entire store, so by default we merge:
 	 * fetch existing cookies, overwrite any with the same name/domain/path, and
