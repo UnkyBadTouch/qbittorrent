@@ -236,15 +236,40 @@ class Client
 		return $this->requestDto('GET', '/api/v2/app/cookies', Cookie::class);
 	}
 
-	/** @param array<Cookie|array> $cookies */
-	public function setCookies(array $cookies)
+	/**
+	 * The setCookies endpoint replaces the entire store, so by default we merge:
+	 * fetch existing cookies, overwrite any with the same name/domain/path, and
+	 * keep the rest. Pass $merge = false to replace the store outright.
+	 *
+	 * @param array<Cookie|array> $cookies
+	 */
+	public function setCookies(array $cookies, bool $merge = true)
 	{
+		$cookies = array_map(
+			fn ($c) => $c instanceof Cookie ? $c : new Cookie($c),
+			$cookies,
+		);
+
+		$key = fn (Cookie $c) => $c->name . "\0" . $c->domain . "\0" . $c->path;
+
+		$byKey = [];
+
+		if ($merge)
+		{
+			foreach ($this->getCookies() as $existing)
+			{
+				$byKey[$key($existing)] = $existing;
+			}
+		}
+
+		foreach ($cookies as $cookie)
+		{
+			$byKey[$key($cookie)] = $cookie;
+		}
+
 		return $this->request('POST', '/api/v2/app/setCookies', [
 		'form_params' => [
-			'cookies' => json_encode(array_map(
-				fn ($c) => $c instanceof Cookie ? $c : new Cookie($c),
-				$cookies,
-			)),
+			'cookies' => json_encode(array_values($byKey)),
 		],
 		]);
 	}
