@@ -80,17 +80,17 @@ class Helper
 	}
 
 	public static function filesize(int|float $bytes, int $precision = 2): string
-{
-	$units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+	{
+		$units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
 
-	$i = $bytes > 0
+		$i = $bytes > 0
 		? min((int) floor(log($bytes, 1024)), count($units) - 1)
 		: 0;
 
-	return round($bytes / (1024 ** $i), $precision)
+		return round($bytes / (1024 ** $i), $precision)
 		. ' '
 		. $units[$i];
-}
+	}
 
 	public static function atomicWrite(string $path, string $content): void
 	{

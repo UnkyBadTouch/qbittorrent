@@ -18,7 +18,7 @@ enum FilePriority: int
 		return $this === self::DO_NOT_DOWNLOAD;
 	}
 
-public function isNormal(): bool
+	public function isNormal(): bool
 	{
 		return $this === self::NORMAL;
 	}

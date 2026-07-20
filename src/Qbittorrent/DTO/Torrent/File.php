@@ -20,7 +20,7 @@ final class File extends Base
 
 	public float $progress_percent { get => round($this->progress * 100, 2); }
 	public bool $is_complete { get => $this->progress >= 1; }
-		public string $size_human { get => Helper::filesize($this->size); }
+	public string $size_human { get => Helper::filesize($this->size); }
 	public string $basename { get => basename($this->name); }
 	public string $dirname { get => dirname($this->name); }
 	public string $url_path { get => implode('/', array_map('rawurlencode', explode('/', $this->name))); }

@@ -41,28 +41,28 @@ class Client
 	private string $cookie = '';
 	private string $cookies_cache = __DIR__ . '/../../cache/cookies.json';
 
-public function __construct(string $baseUri, string $username, string $password)
-{
-	$this->baseUri = $baseUri;
-	$this->username = $username;
-	$this->password = $password;
+	public function __construct(string $baseUri, string $username, string $password)
+	{
+		$this->baseUri = $baseUri;
+		$this->username = $username;
+		$this->password = $password;
 
-	$this->http = new Http(
-	[
+		$this->http = new Http(
+		[
 		'base_uri' => rtrim($this->baseUri, '/') . '/',
 		'timeout'  => 10,
 		'verify'   => true,
-	]);
+		]);
 
-	if (file_exists($this->cookies_cache))
-	{
-		$cache = Helper::jsonDecode(file_get_contents($this->cookies_cache));
-		if ($cache['expires'] > time())
+		if (file_exists($this->cookies_cache))
 		{
-			$this->cookie = $cache['cookie'];
+			$cache = Helper::jsonDecode(file_get_contents($this->cookies_cache));
+			if ($cache['expires'] > time())
+			{
+				$this->cookie = $cache['cookie'];
+			}
 		}
 	}
-}
 
 	public function login(string $username, string $password): self
 	{
@@ -153,19 +153,19 @@ public function __construct(string $baseUri, string $username, string $password)
 		}
 	}
 
-public function getTorrentsByCategory(string $category, array $query = []): array
-{
-	$query['category'] = $category;
+	public function getTorrentsByCategory(string $category, array $query = []): array
+	{
+		$query['category'] = $category;
 
-	return $this->getTorrents($query);
-}
+		return $this->getTorrents($query);
+	}
 
-public function getTorrentsByHash(string|array $hashes, array $query = []): array
-{
-	$query['hashes'] = implode('|', (array)$hashes);
+	public function getTorrentsByHash(string|array $hashes, array $query = []): array
+	{
+		$query['hashes'] = implode('|', (array)$hashes);
 
-	return $this->getTorrents($query);
-}
+		return $this->getTorrents($query);
+	}
 
 
 	public function getTorrentFiles(string $hash): array
@@ -196,402 +196,402 @@ public function getTorrentsByHash(string|array $hashes, array $query = []): arra
 
 	# generated
 	# app
-public function getVersion(): string
-{
-	return $this->requestRaw('GET', '/api/v2/app/version');
-}
+	public function getVersion(): string
+	{
+		return $this->requestRaw('GET', '/api/v2/app/version');
+	}
 
-public function getWebApiVersion(): string
-{
-	return $this->requestRaw('GET', '/api/v2/app/webapiVersion');
-}
+	public function getWebApiVersion(): string
+	{
+		return $this->requestRaw('GET', '/api/v2/app/webapiVersion');
+	}
 
-public function getBuildInfo(): BuildInfo
-{
-	return $this->requestDto('GET', '/api/v2/app/buildInfo', BuildInfo::class);
-}
+	public function getBuildInfo(): BuildInfo
+	{
+		return $this->requestDto('GET', '/api/v2/app/buildInfo', BuildInfo::class);
+	}
 
-public function shutdown()
-{
-	return $this->request('POST', '/api/v2/app/shutdown');
-}
+	public function shutdown()
+	{
+		return $this->request('POST', '/api/v2/app/shutdown');
+	}
 
-public function logout()
-{
-	$result = $this->request('POST', '/api/v2/auth/logout');
-	$this->cookie = '';
-	@unlink($this->cookies_cache);
+	public function logout()
+	{
+		$result = $this->request('POST', '/api/v2/auth/logout');
+		$this->cookie = '';
+		@unlink($this->cookies_cache);
 
-	return $result;
-}
+		return $result;
+	}
 
-public function getDefaultSavePath(): string
-{
-	return $this->requestRaw('GET', '/api/v2/app/defaultSavePath');
-}
+	public function getDefaultSavePath(): string
+	{
+		return $this->requestRaw('GET', '/api/v2/app/defaultSavePath');
+	}
 
-/** @return Cookie[] */
-public function getCookies(): array
-{
-	return $this->requestDto('GET', '/api/v2/app/cookies', Cookie::class);
-}
+	/** @return Cookie[] */
+	public function getCookies(): array
+	{
+		return $this->requestDto('GET', '/api/v2/app/cookies', Cookie::class);
+	}
 
-/** @param array<Cookie|array> $cookies */
-public function setCookies(array $cookies)
-{
-	return $this->request('POST', '/api/v2/app/setCookies', [
+	/** @param array<Cookie|array> $cookies */
+	public function setCookies(array $cookies)
+	{
+		return $this->request('POST', '/api/v2/app/setCookies', [
 		'form_params' => [
 			'cookies' => json_encode(array_map(
 				fn ($c) => $c instanceof Cookie ? $c : new Cookie($c),
 				$cookies,
 			)),
 		],
-	]);
-}
+		]);
+	}
 
-public function getPreferences(): Preferences
-{
-	return $this->requestDto('GET', '/api/v2/app/preferences', Preferences::class);
-}
+	public function getPreferences(): Preferences
+	{
+		return $this->requestDto('GET', '/api/v2/app/preferences', Preferences::class);
+	}
 
-public function setPreferences(array $prefs)
-{
-	return $this->request('POST', '/api/v2/app/setPreferences', [
+	public function setPreferences(array $prefs)
+	{
+		return $this->request('POST', '/api/v2/app/setPreferences', [
 		'form_params' => [
 			'json' => json_encode($prefs),
 		],
-	]);
-}
+		]);
+	}
 
-public function deleteApiKey()
-{
-	return $this->request('POST', '/api/v2/app/deleteAPIKey');
-}
+	public function deleteApiKey()
+	{
+		return $this->request('POST', '/api/v2/app/deleteAPIKey');
+	}
 
-public function rotateApiKey(): string
-{
-	$result = $this->request('POST', '/api/v2/app/rotateAPIKey');
+	public function rotateApiKey(): string
+	{
+		$result = $this->request('POST', '/api/v2/app/rotateAPIKey');
 
-	return $result['apiKey'] ?? '';
-}
+		return $result['apiKey'] ?? '';
+	}
 
-public function sendTestEmail()
-{
-	return $this->request('POST', '/api/v2/app/sendTestEmail');
-}
+	public function sendTestEmail()
+	{
+		return $this->request('POST', '/api/v2/app/sendTestEmail');
+	}
 
-public function getProcessInfo(): array
-{
-	return $this->request('GET', '/api/v2/app/processInfo');
-}
+	public function getProcessInfo(): array
+	{
+		return $this->request('GET', '/api/v2/app/processInfo');
+	}
 
-public function getNetworkInterfaces(): array
-{
-	return $this->request('GET', '/api/v2/app/networkInterfaceList');
-}
+	public function getNetworkInterfaces(): array
+	{
+		return $this->request('GET', '/api/v2/app/networkInterfaceList');
+	}
 
-public function getNetworkInterfaceAddresses(string $iface = ''): array
-{
-	return $this->request('GET', '/api/v2/app/networkInterfaceAddressList', [
+	public function getNetworkInterfaceAddresses(string $iface = ''): array
+	{
+		return $this->request('GET', '/api/v2/app/networkInterfaceAddressList', [
 		'query' => ['iface' => $iface],
-	]);
-}
+		]);
+	}
 
-public function getDirectoryContent(string $dirPath, string $mode = 'all', bool $withMetadata = false): array
-{
-	return $this->request('GET', '/api/v2/app/getDirectoryContent', [
+	public function getDirectoryContent(string $dirPath, string $mode = 'all', bool $withMetadata = false): array
+	{
+		return $this->request('GET', '/api/v2/app/getDirectoryContent', [
 		'query' => [
 			'dirPath' => $dirPath,
 			'mode' => $mode,
 			'withMetadata' => $withMetadata ? 'true' : 'false',
 		],
-	]);
-}
+		]);
+	}
 
-public function getFreeSpaceAtPath(string $path): int
-{
-	return (int)$this->requestRaw('GET', '/api/v2/app/getFreeSpaceAtPath', [
+	public function getFreeSpaceAtPath(string $path): int
+	{
+		return (int)$this->requestRaw('GET', '/api/v2/app/getFreeSpaceAtPath', [
 		'query' => [
 			'path' => $path,
 		],
-	]);
-}
+		]);
+	}
 
 	# clientdata
-public function loadClientData(array $keys = []): array
-{
-	return $this->request('GET', '/api/v2/clientdata/load', [
+	public function loadClientData(array $keys = []): array
+	{
+		return $this->request('GET', '/api/v2/clientdata/load', [
 		'query' => $keys === [] ? [] : ['keys' => json_encode($keys)],
-	]);
-}
+		]);
+	}
 
-public function storeClientData(array $data)
-{
-	return $this->request('POST', '/api/v2/clientdata/store', [
+	public function storeClientData(array $data)
+	{
+		return $this->request('POST', '/api/v2/clientdata/store', [
 		'form_params' => [
 			'data' => json_encode($data),
 		],
-	]);
-}
+		]);
+	}
 
 	# log
-public function getLog(array $query = []): array
-{
-	return $this->requestDto('GET', '/api/v2/log/main', Message::class, [
+	public function getLog(array $query = []): array
+	{
+		return $this->requestDto('GET', '/api/v2/log/main', Message::class, [
 		'query' => $query,
-	]);
-}
+		]);
+	}
 
-public function getPeerLog(array $query = []): array
-{
-	return $this->requestDto('GET', '/api/v2/log/peers', LogPeer::class, [
+	public function getPeerLog(array $query = []): array
+	{
+		return $this->requestDto('GET', '/api/v2/log/peers', LogPeer::class, [
 		'query' => $query,
-	]);
-}
+		]);
+	}
 
 	# sync
-public function syncMainData(array $query = []): MainData
-{
-	return $this->requestDto('GET', '/api/v2/sync/maindata', MainData::class, [
+	public function syncMainData(array $query = []): MainData
+	{
+		return $this->requestDto('GET', '/api/v2/sync/maindata', MainData::class, [
 		'query' => $query,
-	]);
-}
+		]);
+	}
 
-public function syncTorrentPeers(array $query = [])
-{
-	return $this->request('GET', '/api/v2/sync/torrentPeers', [
+	public function syncTorrentPeers(array $query = [])
+	{
+		return $this->request('GET', '/api/v2/sync/torrentPeers', [
 		'query' => $query,
-	]);
-}
+		]);
+	}
 
 	# transfer
-public function getTransferInfo(): Transfer
-{
-	return $this->requestDto('GET', '/api/v2/transfer/info', Transfer::class);
-}
+	public function getTransferInfo(): Transfer
+	{
+		return $this->requestDto('GET', '/api/v2/transfer/info', Transfer::class);
+	}
 
-public function getSpeedLimitsMode(): bool
-{
-	return $this->requestRaw('GET', '/api/v2/transfer/speedLimitsMode') === '1';
-}
+	public function getSpeedLimitsMode(): bool
+	{
+		return $this->requestRaw('GET', '/api/v2/transfer/speedLimitsMode') === '1';
+	}
 
-public function toggleSpeedLimitsMode()
-{
-	return $this->request('POST', '/api/v2/transfer/toggleSpeedLimitsMode');
-}
+	public function toggleSpeedLimitsMode()
+	{
+		return $this->request('POST', '/api/v2/transfer/toggleSpeedLimitsMode');
+	}
 
-public function setSpeedLimitsMode(bool $alternative)
-{
-	return $this->request('POST', '/api/v2/transfer/setSpeedLimitsMode', [
+	public function setSpeedLimitsMode(bool $alternative)
+	{
+		return $this->request('POST', '/api/v2/transfer/setSpeedLimitsMode', [
 		'form_params' => [
 			'mode' => $alternative ? 1 : 0,
 		],
-	]);
-}
+		]);
+	}
 
-public function getSpeedLimits(): array
-{
-	return $this->request('GET', '/api/v2/transfer/getSpeedLimits');
-}
+	public function getSpeedLimits(): array
+	{
+		return $this->request('GET', '/api/v2/transfer/getSpeedLimits');
+	}
 
-public function setSpeedLimits(int $upLimit, int $downLimit, int $altUpLimit, int $altDownLimit)
-{
-	return $this->request('POST', '/api/v2/transfer/setSpeedLimits', [
+	public function setSpeedLimits(int $upLimit, int $downLimit, int $altUpLimit, int $altDownLimit)
+	{
+		return $this->request('POST', '/api/v2/transfer/setSpeedLimits', [
 		'form_params' => [
 			'up_limit' => $upLimit,
 			'dl_limit' => $downLimit,
 			'alt_up_limit' => $altUpLimit,
 			'alt_dl_limit' => $altDownLimit,
 		],
-	]);
-}
+		]);
+	}
 
-public function getGlobalDownloadLimit(): int
-{
-	return (int)$this->requestRaw('GET', '/api/v2/transfer/downloadLimit');
-}
+	public function getGlobalDownloadLimit(): int
+	{
+		return (int)$this->requestRaw('GET', '/api/v2/transfer/downloadLimit');
+	}
 
-public function setGlobalDownloadLimit(int $limit)
-{
-	return $this->request('POST', '/api/v2/transfer/setDownloadLimit', [
+	public function setGlobalDownloadLimit(int $limit)
+	{
+		return $this->request('POST', '/api/v2/transfer/setDownloadLimit', [
 		'form_params' => [
 			'limit' => $limit,
 		],
-	]);
-}
+		]);
+	}
 
-public function getGlobalUploadLimit(): int
-{
-	return (int)$this->requestRaw('GET', '/api/v2/transfer/uploadLimit');
-}
+	public function getGlobalUploadLimit(): int
+	{
+		return (int)$this->requestRaw('GET', '/api/v2/transfer/uploadLimit');
+	}
 
-public function setGlobalUploadLimit(int $limit)
-{
-	return $this->request('POST', '/api/v2/transfer/setUploadLimit', [
+	public function setGlobalUploadLimit(int $limit)
+	{
+		return $this->request('POST', '/api/v2/transfer/setUploadLimit', [
 		'form_params' => [
 			'limit' => $limit,
 		],
-	]);
-}
+		]);
+	}
 
-public function banPeers(string|array $peers)
-{
-	return $this->request('POST', '/api/v2/transfer/banPeers', [
+	public function banPeers(string|array $peers)
+	{
+		return $this->request('POST', '/api/v2/transfer/banPeers', [
 		'form_params' => [
 			'peers' => implode('|', (array)$peers),
 		],
-	]);
-}
+		]);
+	}
 
 	# torrents
-public function getTorrents(array $query = []): array
-{
-	return $this->requestDto('GET', '/api/v2/torrents/info', Torrent::class, [
+	public function getTorrents(array $query = []): array
+	{
+		return $this->requestDto('GET', '/api/v2/torrents/info', Torrent::class, [
 		'query' => $query,
-	]);
-}
+		]);
+	}
 
-public function getTorrentProperties(string $hash): Properties
-{
-	return $this->requestDto('GET', '/api/v2/torrents/properties', Properties::class, [
+	public function getTorrentProperties(string $hash): Properties
+	{
+		return $this->requestDto('GET', '/api/v2/torrents/properties', Properties::class, [
 		'query' => [
 			'hash' => $hash,
 		],
-	]);
-}
+		]);
+	}
 
-public function getTorrentTrackers(string $hash)
-{
-	return $this->requestDto('GET', '/api/v2/torrents/trackers', Tracker::class, [
+	public function getTorrentTrackers(string $hash)
+	{
+		return $this->requestDto('GET', '/api/v2/torrents/trackers', Tracker::class, [
 		'query' => [
 			'hash' => $hash,
 		],
-	]);
-}
+		]);
+	}
 
-public function getTorrentPeers(string $hash)
-{
-	$data = $this->request('GET', '/api/v2/sync/torrentPeers', [
+	public function getTorrentPeers(string $hash)
+	{
+		$data = $this->request('GET', '/api/v2/sync/torrentPeers', [
 		'query' => [
 			'hash' => $hash,
 		],
-	]);
+		]);
 
-	return $this->toDto(Peer::class, array_values($data['peers'] ?? []));
-}
+		return $this->toDto(Peer::class, array_values($data['peers'] ?? []));
+	}
 
-public function getTorrentPiecesStates(string $hash)
-{
-	$states = $this->request('GET', '/api/v2/torrents/pieceStates', [
+	public function getTorrentPiecesStates(string $hash)
+	{
+		$states = $this->request('GET', '/api/v2/torrents/pieceStates', [
 		'query' => [
 			'hash' => $hash,
 		],
-	]);
+		]);
 
-	$pairs = array_map(
+		$pairs = array_map(
 		fn ($state, $index) => ['index' => $index, 'state' => $state],
 		$states,
 		array_keys($states),
-	);
+		);
 
-	return $this->toDto(Piece::class, $pairs);
-}
+		return $this->toDto(Piece::class, $pairs);
+	}
 
-public function getTorrentWebSeeds(string $hash): array
-{
-	return $this->requestDto('GET', '/api/v2/torrents/webseeds', WebSeed::class, [
+	public function getTorrentWebSeeds(string $hash): array
+	{
+		return $this->requestDto('GET', '/api/v2/torrents/webseeds', WebSeed::class, [
 		'query' => [
 			'hash' => $hash,
 		],
-	]);
-}
+		]);
+	}
 
-public function getTorrentPieceHashes(string $hash): array
-{
-	return $this->request('GET', '/api/v2/torrents/pieceHashes', [
+	public function getTorrentPieceHashes(string $hash): array
+	{
+		return $this->request('GET', '/api/v2/torrents/pieceHashes', [
 		'query' => [
 			'hash' => $hash,
 		],
-	]);
-}
+		]);
+	}
 
-public function getTorrentPieceAvailability(string $hash): array
-{
-	return $this->request('GET', '/api/v2/torrents/pieceAvailability', [
+	public function getTorrentPieceAvailability(string $hash): array
+	{
+		return $this->request('GET', '/api/v2/torrents/pieceAvailability', [
 		'query' => [
 			'hash' => $hash,
 		],
-	]);
-}
+		]);
+	}
 
-public function addWebSeeds(string $hash, string|array $urls)
-{
-	return $this->request('POST', '/api/v2/torrents/addWebSeeds', [
+	public function addWebSeeds(string $hash, string|array $urls)
+	{
+		return $this->request('POST', '/api/v2/torrents/addWebSeeds', [
 		'form_params' => [
 			'hash' => $hash,
 			'urls' => implode('|', (array)$urls),
 		],
-	]);
-}
+		]);
+	}
 
-public function editWebSeed(string $hash, string $origUrl, string $newUrl)
-{
-	return $this->request('POST', '/api/v2/torrents/editWebSeed', [
+	public function editWebSeed(string $hash, string $origUrl, string $newUrl)
+	{
+		return $this->request('POST', '/api/v2/torrents/editWebSeed', [
 		'form_params' => [
 			'hash' => $hash,
 			'origUrl' => $origUrl,
 			'newUrl' => $newUrl,
 		],
-	]);
-}
+		]);
+	}
 
-public function removeWebSeeds(string $hash, string|array $urls)
-{
-	return $this->request('POST', '/api/v2/torrents/removeWebSeeds', [
+	public function removeWebSeeds(string $hash, string|array $urls)
+	{
+		return $this->request('POST', '/api/v2/torrents/removeWebSeeds', [
 		'form_params' => [
 			'hash' => $hash,
 			'urls' => implode('|', (array)$urls),
 		],
-	]);
-}
+		]);
+	}
 
-public function getTorrentsCount(): int
-{
-	return (int)$this->requestRaw('GET', '/api/v2/torrents/count');
-}
+	public function getTorrentsCount(): int
+	{
+		return (int)$this->requestRaw('GET', '/api/v2/torrents/count');
+	}
 
-public function exportTorrent(string $hash): string
-{
-	return $this->requestRaw('GET', '/api/v2/torrents/export', [
+	public function exportTorrent(string $hash): string
+	{
+		return $this->requestRaw('GET', '/api/v2/torrents/export', [
 		'query' => [
 			'hash' => $hash,
 		],
-	]);
-}
+		]);
+	}
 
-public function downloadFile(string $hash, string|File $file): string
-{
-	return $this->requestRaw('GET', '/api/v2/torrents/downloadFile', [
+	public function downloadFile(string $hash, string|File $file): string
+	{
+		return $this->requestRaw('GET', '/api/v2/torrents/downloadFile', [
 		'query' => [
 			'hash' => $hash,
 			'file' => $file instanceof File ? $file->index : $file,
 		],
-	]);
-}
+		]);
+	}
 
-public function fetchMetadata(string $source, string $downloader = ''): array
-{
-	return $this->request('POST', '/api/v2/torrents/fetchMetadata', [
+	public function fetchMetadata(string $source, string $downloader = ''): array
+	{
+		return $this->request('POST', '/api/v2/torrents/fetchMetadata', [
 		'form_params' => [
 			'source' => $source,
 			'downloader' => $downloader,
 		],
-	]);
-}
+		]);
+	}
 
-public function parseMetadata(string $filePath): array
-{
-	return $this->request('POST', '/api/v2/torrents/parseMetadata', [
+	public function parseMetadata(string $filePath): array
+	{
+		return $this->request('POST', '/api/v2/torrents/parseMetadata', [
 		'multipart' => [
 			[
 				'name' => 'torrents',
@@ -601,257 +601,257 @@ public function parseMetadata(string $filePath): array
 					: basename($filePath) . '.torrent',
 			],
 		],
-	]);
-}
+		]);
+	}
 
-public function saveMetadata(string $source): string
-{
-	return $this->requestRaw('GET', '/api/v2/torrents/saveMetadata', [
+	public function saveMetadata(string $source): string
+	{
+		return $this->requestRaw('GET', '/api/v2/torrents/saveMetadata', [
 		'query' => [
 			'source' => $source,
 		],
-	]);
-}
+		]);
+	}
 
-public function setTorrentComment(string|array $hashes, string $comment)
-{
-	return $this->request('POST', '/api/v2/torrents/setComment', [
+	public function setTorrentComment(string|array $hashes, string $comment)
+	{
+		return $this->request('POST', '/api/v2/torrents/setComment', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 			'comment' => $comment,
 		],
-	]);
-}
+		]);
+	}
 
-public function setTorrentDownloadPath(string|array $ids, string $path)
-{
-	return $this->request('POST', '/api/v2/torrents/setDownloadPath', [
+	public function setTorrentDownloadPath(string|array $ids, string $path)
+	{
+		return $this->request('POST', '/api/v2/torrents/setDownloadPath', [
 		'form_params' => [
 			'id' => implode('|', (array)$ids),
 			'path' => $path,
 		],
-	]);
-}
+		]);
+	}
 
-public function setTorrentSavePath(string|array $ids, string $path)
-{
-	return $this->request('POST', '/api/v2/torrents/setSavePath', [
+	public function setTorrentSavePath(string|array $ids, string $path)
+	{
+		return $this->request('POST', '/api/v2/torrents/setSavePath', [
 		'form_params' => [
 			'id' => implode('|', (array)$ids),
 			'path' => $path,
 		],
-	]);
-}
+		]);
+	}
 
-public function setTorrentTags(string|array $hashes, string|array $tags)
-{
-	return $this->request('POST', '/api/v2/torrents/setTags', [
+	public function setTorrentTags(string|array $hashes, string|array $tags)
+	{
+		return $this->request('POST', '/api/v2/torrents/setTags', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 			'tags' => implode(',', (array)$tags),
 		],
-	]);
-}
+		]);
+	}
 
-public function getTorrentSslParameters(string $hash): array
-{
-	return $this->request('GET', '/api/v2/torrents/SSLParameters', [
+	public function getTorrentSslParameters(string $hash): array
+	{
+		return $this->request('GET', '/api/v2/torrents/SSLParameters', [
 		'query' => [
 			'hash' => $hash,
 		],
-	]);
-}
+		]);
+	}
 
-public function setTorrentSslParameters(string $hash, string $certificate, string $privateKey, string $dhParams)
-{
-	return $this->request('POST', '/api/v2/torrents/setSSLParameters', [
+	public function setTorrentSslParameters(string $hash, string $certificate, string $privateKey, string $dhParams)
+	{
+		return $this->request('POST', '/api/v2/torrents/setSSLParameters', [
 		'form_params' => [
 			'hash' => $hash,
 			'ssl_certificate' => $certificate,
 			'ssl_private_key' => $privateKey,
 			'ssl_dh_params' => $dhParams,
 		],
-	]);
-}
+		]);
+	}
 
-public function stop(string|array $hashes)
-{
-	return $this->request('POST', '/api/v2/torrents/stop', [
+	public function stop(string|array $hashes)
+	{
+		return $this->request('POST', '/api/v2/torrents/stop', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 		],
-	]);
-}
+		]);
+	}
 
-public function start(string|array $hashes)
-{
-	return $this->request('POST', '/api/v2/torrents/start', [
+	public function start(string|array $hashes)
+	{
+		return $this->request('POST', '/api/v2/torrents/start', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 		],
-	]);
-}
+		]);
+	}
 
-public function reannounce(string|array $hashes)
-{
-	return $this->request('POST', '/api/v2/torrents/reannounce', [
+	public function reannounce(string|array $hashes)
+	{
+		return $this->request('POST', '/api/v2/torrents/reannounce', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 		],
-	]);
-}
+		]);
+	}
 
-public function delete(string|array $hashes, bool $deleteFiles = false)
-{
-	return $this->request('POST', '/api/v2/torrents/delete', [
+	public function delete(string|array $hashes, bool $deleteFiles = false)
+	{
+		return $this->request('POST', '/api/v2/torrents/delete', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 			'deleteFiles' => $deleteFiles ? 'true' : 'false',
 		],
-	]);
-}
+		]);
+	}
 
-public function recheck(string|array $hashes)
-{
-	return $this->request('POST', '/api/v2/torrents/recheck', [
+	public function recheck(string|array $hashes)
+	{
+		return $this->request('POST', '/api/v2/torrents/recheck', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 		],
-	]);
-}
+		]);
+	}
 
 	# trackers / peers
-public function addTrackers(string $hash, string|array $urls)
-{
-	return $this->request('POST', '/api/v2/torrents/addTrackers', [
+	public function addTrackers(string $hash, string|array $urls)
+	{
+		return $this->request('POST', '/api/v2/torrents/addTrackers', [
 		'form_params' => [
 			'hash' => $hash,
 			'urls' => implode("\n", (array)$urls),
 		],
-	]);
-}
+		]);
+	}
 
-public function editTracker(string $hash, string $origUrl, string $newUrl)
-{
-	return $this->request('POST', '/api/v2/torrents/editTracker', [
+	public function editTracker(string $hash, string $origUrl, string $newUrl)
+	{
+		return $this->request('POST', '/api/v2/torrents/editTracker', [
 		'form_params' => [
 			'hash' => $hash,
 			'origUrl' => $origUrl,
 			'newUrl' => $newUrl,
 		],
-	]);
-}
+		]);
+	}
 
-public function removeTrackers(string $hash, string|array $urls)
-{
-	return $this->request('POST', '/api/v2/torrents/removeTrackers', [
+	public function removeTrackers(string $hash, string|array $urls)
+	{
+		return $this->request('POST', '/api/v2/torrents/removeTrackers', [
 		'form_params' => [
 			'hash' => $hash,
 			'urls' => implode('|', (array)$urls),
 		],
-	]);
-}
+		]);
+	}
 
-public function addPeers(string|array $hashes, string|array $peers)
-{
-	return $this->request('POST', '/api/v2/torrents/addPeers', [
+	public function addPeers(string|array $hashes, string|array $peers)
+	{
+		return $this->request('POST', '/api/v2/torrents/addPeers', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 			'peers' => implode('|', (array)$peers),
 		],
-	]);
-}
+		]);
+	}
 
 	# priority
-public function increasePrio(string|array $hashes)
-{
-	return $this->request('POST', '/api/v2/torrents/increasePrio', [
+	public function increasePrio(string|array $hashes)
+	{
+		return $this->request('POST', '/api/v2/torrents/increasePrio', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 		],
-	]);
-}
+		]);
+	}
 
-public function decreasePrio(string|array $hashes)
-{
-	return $this->request('POST', '/api/v2/torrents/decreasePrio', [
+	public function decreasePrio(string|array $hashes)
+	{
+		return $this->request('POST', '/api/v2/torrents/decreasePrio', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 		],
-	]);
-}
+		]);
+	}
 
-public function topPrio(string|array $hashes)
-{
-	return $this->request('POST', '/api/v2/torrents/topPrio', [
+	public function topPrio(string|array $hashes)
+	{
+		return $this->request('POST', '/api/v2/torrents/topPrio', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 		],
-	]);
-}
+		]);
+	}
 
-public function bottomPrio(string|array $hashes)
-{
-	return $this->request('POST', '/api/v2/torrents/bottomPrio', [
+	public function bottomPrio(string|array $hashes)
+	{
+		return $this->request('POST', '/api/v2/torrents/bottomPrio', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 		],
-	]);
-}
+		]);
+	}
 
-public function setFilePrio(string $hash, string|array $ids, int $priority)
-{
-	return $this->request('POST', '/api/v2/torrents/filePrio', [
+	public function setFilePrio(string $hash, string|array $ids, int $priority)
+	{
+		return $this->request('POST', '/api/v2/torrents/filePrio', [
 		'form_params' => [
 			'hash' => $hash,
 			'id' => implode('|', (array)$ids),
 			'priority' => $priority,
 		],
-	]);
-}
+		]);
+	}
 
 	# limits / share limits
-public function getDownloadLimit(string|array $hashes)
-{
-	return $this->request('POST', '/api/v2/torrents/downloadLimit', [
+	public function getDownloadLimit(string|array $hashes)
+	{
+		return $this->request('POST', '/api/v2/torrents/downloadLimit', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 		],
-	]);
-}
+		]);
+	}
 
-public function setDownloadLimit(string|array $hashes, int $limit)
-{
-	return $this->request('POST', '/api/v2/torrents/setDownloadLimit', [
-		'form_params' => [
-			'hashes' => implode('|', (array)$hashes),
-			'limit' => $limit,
-		],
-	]);
-}
-
-public function getUploadLimit(string|array $hashes)
-{
-	return $this->request('POST', '/api/v2/torrents/uploadLimit', [
-		'form_params' => [
-			'hashes' => implode('|', (array)$hashes),
-		],
-	]);
-}
-
-public function setUploadLimit(string|array $hashes, int $limit)
-{
-	return $this->request('POST', '/api/v2/torrents/setUploadLimit', [
+	public function setDownloadLimit(string|array $hashes, int $limit)
+	{
+		return $this->request('POST', '/api/v2/torrents/setDownloadLimit', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 			'limit' => $limit,
 		],
-	]);
-}
+		]);
+	}
 
-public function setShareLimits(string|array $hashes, float $ratioLimit, int $seedingTimeLimit, int $inactiveSeedingTimeLimit, string $shareLimitAction = 'Default', string $shareLimitsMode = 'Default')
-{
-	return $this->request('POST', '/api/v2/torrents/setShareLimits', [
+	public function getUploadLimit(string|array $hashes)
+	{
+		return $this->request('POST', '/api/v2/torrents/uploadLimit', [
+		'form_params' => [
+			'hashes' => implode('|', (array)$hashes),
+		],
+		]);
+	}
+
+	public function setUploadLimit(string|array $hashes, int $limit)
+	{
+		return $this->request('POST', '/api/v2/torrents/setUploadLimit', [
+		'form_params' => [
+			'hashes' => implode('|', (array)$hashes),
+			'limit' => $limit,
+		],
+		]);
+	}
+
+	public function setShareLimits(string|array $hashes, float $ratioLimit, int $seedingTimeLimit, int $inactiveSeedingTimeLimit, string $shareLimitAction = 'Default', string $shareLimitsMode = 'Default')
+	{
+		return $this->request('POST', '/api/v2/torrents/setShareLimits', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 			'ratioLimit' => $ratioLimit,
@@ -860,123 +860,123 @@ public function setShareLimits(string|array $hashes, float $ratioLimit, int $see
 			'shareLimitAction' => $shareLimitAction,
 			'shareLimitsMode' => $shareLimitsMode,
 		],
-	]);
-}
+		]);
+	}
 
 	# location / naming
-public function setLocation(string|array $hashes, string $location)
-{
-	return $this->request('POST', '/api/v2/torrents/setLocation', [
+	public function setLocation(string|array $hashes, string $location)
+	{
+		return $this->request('POST', '/api/v2/torrents/setLocation', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 			'location' => $location,
 		],
-	]);
-}
+		]);
+	}
 
-public function renameTorrent(string $hash, string $name)
-{
-	return $this->request('POST', '/api/v2/torrents/rename', [
+	public function renameTorrent(string $hash, string $name)
+	{
+		return $this->request('POST', '/api/v2/torrents/rename', [
 		'form_params' => [
 			'hash' => $hash,
 			'name' => $name,
 		],
-	]);
-}
+		]);
+	}
 
-public function renameFile(string $hash, string $oldPath, string $newPath)
-{
-	return $this->request('POST', '/api/v2/torrents/renameFile', [
+	public function renameFile(string $hash, string $oldPath, string $newPath)
+	{
+		return $this->request('POST', '/api/v2/torrents/renameFile', [
 		'form_params' => [
 			'hash' => $hash,
 			'oldPath' => $oldPath,
 			'newPath' => $newPath,
 		],
-	]);
-}
+		]);
+	}
 
-public function renameFolder(string $hash, string $oldPath, string $newPath)
-{
-	return $this->request('POST', '/api/v2/torrents/renameFolder', [
+	public function renameFolder(string $hash, string $oldPath, string $newPath)
+	{
+		return $this->request('POST', '/api/v2/torrents/renameFolder', [
 		'form_params' => [
 			'hash' => $hash,
 			'oldPath' => $oldPath,
 			'newPath' => $newPath,
 		],
-	]);
-}
+		]);
+	}
 
 	# flags
-public function setAutoManagement(string|array $hashes, bool $enable)
-{
-	return $this->request('POST', '/api/v2/torrents/setAutoManagement', [
+	public function setAutoManagement(string|array $hashes, bool $enable)
+	{
+		return $this->request('POST', '/api/v2/torrents/setAutoManagement', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 			'enable' => $enable ? 'true' : 'false',
 		],
-	]);
-}
+		]);
+	}
 
-public function toggleSequentialDownload(string|array $hashes)
-{
-	return $this->request('POST', '/api/v2/torrents/toggleSequentialDownload', [
+	public function toggleSequentialDownload(string|array $hashes)
+	{
+		return $this->request('POST', '/api/v2/torrents/toggleSequentialDownload', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 		],
-	]);
-}
+		]);
+	}
 
-public function toggleFirstLastPiecePrio(string|array $hashes)
-{
-	return $this->request('POST', '/api/v2/torrents/toggleFirstLastPiecePrio', [
+	public function toggleFirstLastPiecePrio(string|array $hashes)
+	{
+		return $this->request('POST', '/api/v2/torrents/toggleFirstLastPiecePrio', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 		],
-	]);
-}
+		]);
+	}
 
-public function setForceStart(string|array $hashes, bool $value)
-{
-	return $this->request('POST', '/api/v2/torrents/setForceStart', [
-		'form_params' => [
-			'hashes' => implode('|', (array)$hashes),
-			'value' => $value ? 'true' : 'false',
-		],
-	]);
-}
-
-public function setSuperSeeding(string|array $hashes, bool $value)
-{
-	return $this->request('POST', '/api/v2/torrents/setSuperSeeding', [
+	public function setForceStart(string|array $hashes, bool $value)
+	{
+		return $this->request('POST', '/api/v2/torrents/setForceStart', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 			'value' => $value ? 'true' : 'false',
 		],
-	]);
-}
+		]);
+	}
+
+	public function setSuperSeeding(string|array $hashes, bool $value)
+	{
+		return $this->request('POST', '/api/v2/torrents/setSuperSeeding', [
+		'form_params' => [
+			'hashes' => implode('|', (array)$hashes),
+			'value' => $value ? 'true' : 'false',
+		],
+		]);
+	}
 
 	# add torrents
-public function addTorrentUrls(string|array $urls, array $options = []): string
-{
-	# /torrents/add returns plain text ("Ok." / "Fails."), not JSON
-	$body = trim($this->requestRaw('POST', '/api/v2/torrents/add', [
+	public function addTorrentUrls(string|array $urls, array $options = []): string
+	{
+		# /torrents/add returns plain text ("Ok." / "Fails."), not JSON
+		$body = trim($this->requestRaw('POST', '/api/v2/torrents/add', [
 		'form_params' => array_merge([
 			'urls' => implode("\n", (array)$urls),
 		], $options),
-	]));
+		]));
 
-	if (!$this->isAddTorrentSuccess($body))
-	{
-		throw new \Exception('Add torrent failed: ' . $this->describeAddTorrentFailure($body));
+		if (!$this->isAddTorrentSuccess($body))
+		{
+			throw new \Exception('Add torrent failed: ' . $this->describeAddTorrentFailure($body));
+		}
+
+		return $body;
 	}
 
-	return $body;
-}
-
-public function addTorrentFile(string $filePath, array $options = []): string
-{
-	# /torrents/add returns plain text ("Ok." / "Fails."), not JSON
-	$body = trim($this->requestRaw('POST', '/api/v2/torrents/add', [
+	public function addTorrentFile(string $filePath, array $options = []): string
+	{
+		# /torrents/add returns plain text ("Ok." / "Fails."), not JSON
+		$body = trim($this->requestRaw('POST', '/api/v2/torrents/add', [
 		'multipart' => array_merge([
 			[
 				'name' => 'torrents',
@@ -986,505 +986,505 @@ public function addTorrentFile(string $filePath, array $options = []): string
 					: basename($filePath) . '.torrent',
 			],
 		], $this->buildMultipartOptions($options)),
-	]));
+		]));
 
-	if (!$this->isAddTorrentSuccess($body))
-	{
-		throw new \Exception('Add torrent failed: ' . $this->describeAddTorrentFailure($body));
+		if (!$this->isAddTorrentSuccess($body))
+		{
+			throw new \Exception('Add torrent failed: ' . $this->describeAddTorrentFailure($body));
+		}
+
+		return $body;
 	}
-
-	return $body;
-}
 
 	# /torrents/add normally returns "Ok."; some proxies/trackers return a JSON success payload instead
-private function isAddTorrentSuccess(string $body): bool
-{
-	if ($body === 'Ok.')
+	private function isAddTorrentSuccess(string $body): bool
 	{
-		return true;
-	}
-
-	$json = json_decode($body, true);
-	return is_array($json) && (($json['success_count'] ?? 0) > 0 || ($json['failure_count'] ?? 1) === 0);
-}
-
-private function describeAddTorrentFailure(string $body): string
-{
-	if ($body === '')
-	{
-		return '(empty response)';
-	}
-
-	$json = json_decode($body, true);
-	if (is_array($json))
-	{
-		$reason = $json['error'] ?? $json['message'] ?? $json['reason'] ?? null;
-		if ($reason !== null)
+		if ($body === 'Ok.')
 		{
-			return (string) $reason;
+			return true;
 		}
 
-		$counts = array_intersect_key($json, array_flip(['failure_count', 'pending_count', 'success_count']));
-		if ($counts !== [])
-		{
-			return 'no torrents added (' . http_build_query($counts, '', ', ') . ')';
-		}
+		$json = json_decode($body, true);
+		return is_array($json) && (($json['success_count'] ?? 0) > 0 || ($json['failure_count'] ?? 1) === 0);
 	}
 
-	return $body;
-}
+	private function describeAddTorrentFailure(string $body): string
+	{
+		if ($body === '')
+		{
+			return '(empty response)';
+		}
+
+		$json = json_decode($body, true);
+		if (is_array($json))
+		{
+			$reason = $json['error'] ?? $json['message'] ?? $json['reason'] ?? null;
+			if ($reason !== null)
+			{
+				return (string) $reason;
+			}
+
+			$counts = array_intersect_key($json, array_flip(['failure_count', 'pending_count', 'success_count']));
+			if ($counts !== [])
+			{
+				return 'no torrents added (' . http_build_query($counts, '', ', ') . ')';
+			}
+		}
+
+		return $body;
+	}
 
 	# cat and tags
-public function getCategories(): array
-{
-	return $this->requestDto('GET', '/api/v2/torrents/categories', Category::class);
-}
+	public function getCategories(): array
+	{
+		return $this->requestDto('GET', '/api/v2/torrents/categories', Category::class);
+	}
 
-public function createCategory(string $name, string $savePath = '')
-{
-	return $this->request('POST', '/api/v2/torrents/createCategory', [
+	public function createCategory(string $name, string $savePath = '')
+	{
+		return $this->request('POST', '/api/v2/torrents/createCategory', [
 		'form_params' => [
 			'category' => $name,
 			'savePath' => $savePath,
 		],
-	]);
-}
+		]);
+	}
 
-public function deleteCategories(string|array $categories)
-{
-	return $this->request('POST', '/api/v2/torrents/removeCategories', [
+	public function deleteCategories(string|array $categories)
+	{
+		return $this->request('POST', '/api/v2/torrents/removeCategories', [
 		'form_params' => [
 			'categories' => implode("\n", (array)$categories),
 		],
-	]);
-}
+		]);
+	}
 
-public function editCategory(string $name, string $savePath)
-{
-	return $this->request('POST', '/api/v2/torrents/editCategory', [
+	public function editCategory(string $name, string $savePath)
+	{
+		return $this->request('POST', '/api/v2/torrents/editCategory', [
 		'form_params' => [
 			'category' => $name,
 			'savePath' => $savePath,
 		],
-	]);
-}
+		]);
+	}
 
-public function setTorrentCategory(string|array $hashes, string $category)
-{
-	return $this->request('POST', '/api/v2/torrents/setCategory', [
+	public function setTorrentCategory(string|array $hashes, string $category)
+	{
+		return $this->request('POST', '/api/v2/torrents/setCategory', [
 		'form_params' => [
 			'hashes' => implode('|', (array)$hashes),
 			'category' => $category,
 		],
-	]);
-}
-
-public function getTags(): array
-{
-	return $this->request('GET', '/api/v2/torrents/tags');
-}
-
-public function addTorrentTags(string|array $hashes, string|array $tags)
-{
-	return $this->request('POST', '/api/v2/torrents/addTags', [
-		'form_params' => [
-			'hashes' => implode('|', (array)$hashes),
-			'tags' => implode(',', (array)$tags),
-		],
-	]);
-}
-
-public function removeTorrentTags(string|array $hashes, string|array $tags)
-{
-	return $this->request('POST', '/api/v2/torrents/removeTags', [
-		'form_params' => [
-			'hashes' => implode('|', (array)$hashes),
-			'tags' => implode(',', (array)$tags),
-		],
-	]);
-}
-
-public function createTags(string|array $tags)
-{
-	return $this->request('POST', '/api/v2/torrents/createTags', [
-		'form_params' => [
-			'tags' => implode(',', (array)$tags),
-		],
-	]);
-}
-
-public function deleteTags(string|array $tags)
-{
-	return $this->request('POST', '/api/v2/torrents/deleteTags', [
-		'form_params' => [
-			'tags' => implode(',', (array)$tags),
-		],
-	]);
-}
-
-	# rss
-public function getRssFeeds(array $query = [])
-{
-	return $this->hydrateRssItems($this->request('GET', '/api/v2/rss/items', [
-		'query' => $query,
-	]));
-}
-
-// /rss/items is a tree keyed by feed/folder name; a node is a feed iff it has a 'uid' key,
-// otherwise it's a folder of more nodes. $prefix accumulates the backslash-joined path so
-// each Feed knows its own full item path (the API never exposes it as a field, only as tree keys)
-private function hydrateRssItems(array $items, string $prefix = ''): array
-{
-	$result = [];
-
-	foreach ($items as $name => $item)
-	{
-		$path = $prefix === '' ? $name : $prefix . '\\' . $name;
-
-		$result[$name] = array_key_exists('uid', $item)
-			? new Feed(['path' => $path] + $item, $this)
-			: $this->hydrateRssItems($item, $path);
+		]);
 	}
 
-	return $result;
-}
+	public function getTags(): array
+	{
+		return $this->request('GET', '/api/v2/torrents/tags');
+	}
 
-public function addRssRule(string $ruleName, array $ruleDef)
-{
-	return $this->setRssRule($ruleName, $ruleDef);
-}
+	public function addTorrentTags(string|array $hashes, string|array $tags)
+	{
+		return $this->request('POST', '/api/v2/torrents/addTags', [
+		'form_params' => [
+			'hashes' => implode('|', (array)$hashes),
+			'tags' => implode(',', (array)$tags),
+		],
+		]);
+	}
 
-public function setRssRule(string $ruleName, array $ruleDef)
-{
-	return $this->request('POST', '/api/v2/rss/setRule', [
+	public function removeTorrentTags(string|array $hashes, string|array $tags)
+	{
+		return $this->request('POST', '/api/v2/torrents/removeTags', [
+		'form_params' => [
+			'hashes' => implode('|', (array)$hashes),
+			'tags' => implode(',', (array)$tags),
+		],
+		]);
+	}
+
+	public function createTags(string|array $tags)
+	{
+		return $this->request('POST', '/api/v2/torrents/createTags', [
+		'form_params' => [
+			'tags' => implode(',', (array)$tags),
+		],
+		]);
+	}
+
+	public function deleteTags(string|array $tags)
+	{
+		return $this->request('POST', '/api/v2/torrents/deleteTags', [
+		'form_params' => [
+			'tags' => implode(',', (array)$tags),
+		],
+		]);
+	}
+
+	# rss
+	public function getRssFeeds(array $query = [])
+	{
+		return $this->hydrateRssItems($this->request('GET', '/api/v2/rss/items', [
+		'query' => $query,
+		]));
+	}
+
+	// /rss/items is a tree keyed by feed/folder name; a node is a feed iff it has a 'uid' key,
+	// otherwise it's a folder of more nodes. $prefix accumulates the backslash-joined path so
+	// each Feed knows its own full item path (the API never exposes it as a field, only as tree keys)
+	private function hydrateRssItems(array $items, string $prefix = ''): array
+	{
+		$result = [];
+
+		foreach ($items as $name => $item)
+		{
+			$path = $prefix === '' ? $name : $prefix . '\\' . $name;
+
+			$result[$name] = array_key_exists('uid', $item)
+			? new Feed(['path' => $path] + $item, $this)
+			: $this->hydrateRssItems($item, $path);
+		}
+
+		return $result;
+	}
+
+	public function addRssRule(string $ruleName, array $ruleDef)
+	{
+		return $this->setRssRule($ruleName, $ruleDef);
+	}
+
+	public function setRssRule(string $ruleName, array $ruleDef)
+	{
+		return $this->request('POST', '/api/v2/rss/setRule', [
 		'form_params' => [
 			'ruleName' => $ruleName,
 			'ruleDef' => json_encode($ruleDef),
 		],
-	]);
-}
+		]);
+	}
 
-public function removeRssRule(string $ruleName)
-{
-	$this->deleteRssRule($ruleName);
-}
+	public function removeRssRule(string $ruleName)
+	{
+		$this->deleteRssRule($ruleName);
+	}
 
-public function deleteRssRule(string $ruleName)
-{
-	return $this->request('POST', '/api/v2/rss/removeRule', [
+	public function deleteRssRule(string $ruleName)
+	{
+		return $this->request('POST', '/api/v2/rss/removeRule', [
 		'form_params' => [
 			'ruleName' => $ruleName,
 		],
-	]);
-}
+		]);
+	}
 
-public function addRssFeed(string $url, string $path = '')
-{
-	return $this->request('POST', '/api/v2/rss/addFeed', [
+	public function addRssFeed(string $url, string $path = '')
+	{
+		return $this->request('POST', '/api/v2/rss/addFeed', [
 		'form_params' => [
 			'url' => $url,
 			'path' => $path,
 		],
-	]);
-}
+		]);
+	}
 
-public function removeRssFeed(string $path)
-{
-	return $this->request('POST', '/api/v2/rss/removeItem', [
+	public function removeRssFeed(string $path)
+	{
+		return $this->request('POST', '/api/v2/rss/removeItem', [
 		'form_params' => [
 			'path' => $path,
 		],
-	]);
-}
+		]);
+	}
 
-public function addRssFolder(string $path)
-{
-	return $this->request('POST', '/api/v2/rss/addFolder', [
+	public function addRssFolder(string $path)
+	{
+		return $this->request('POST', '/api/v2/rss/addFolder', [
 		'form_params' => [
 			'path' => $path,
 		],
-	]);
-}
+		]);
+	}
 
-public function setRssFeedRefreshInterval(string $path, int $seconds)
-{
-	return $this->request('POST', '/api/v2/rss/setFeedRefreshInterval', [
+	public function setRssFeedRefreshInterval(string $path, int $seconds)
+	{
+		return $this->request('POST', '/api/v2/rss/setFeedRefreshInterval', [
 		'form_params' => [
 			'path' => $path,
 			'refreshInterval' => $seconds,
 		],
-	]);
-}
+		]);
+	}
 
-public function setRssFeedUrl(string $path, string $url)
-{
-	return $this->request('POST', '/api/v2/rss/setFeedURL', [
+	public function setRssFeedUrl(string $path, string $url)
+	{
+		return $this->request('POST', '/api/v2/rss/setFeedURL', [
 		'form_params' => [
 			'path' => $path,
 			'url' => $url,
 		],
-	]);
-}
+		]);
+	}
 
-public function moveRssItem(string $itemPath, string $destPath)
-{
-	return $this->request('POST', '/api/v2/rss/moveItem', [
+	public function moveRssItem(string $itemPath, string $destPath)
+	{
+		return $this->request('POST', '/api/v2/rss/moveItem', [
 		'form_params' => [
 			'itemPath' => $itemPath,
 			'destPath' => $destPath,
 		],
-	]);
-}
-
-public function markRssItemAsRead(string $itemPath, ?string $articleId = null)
-{
-	$formParams = ['itemPath' => $itemPath];
-
-	if ($articleId !== null)
-	{
-		$formParams['articleId'] = $articleId;
+		]);
 	}
 
-	return $this->request('POST', '/api/v2/rss/markAsRead', [
-		'form_params' => $formParams,
-	]);
-}
+	public function markRssItemAsRead(string $itemPath, ?string $articleId = null)
+	{
+		$formParams = ['itemPath' => $itemPath];
 
-public function refreshRssItem(string $itemPath)
-{
-	return $this->request('POST', '/api/v2/rss/refreshItem', [
+		if ($articleId !== null)
+		{
+			$formParams['articleId'] = $articleId;
+		}
+
+		return $this->request('POST', '/api/v2/rss/markAsRead', [
+		'form_params' => $formParams,
+		]);
+	}
+
+	public function refreshRssItem(string $itemPath)
+	{
+		return $this->request('POST', '/api/v2/rss/refreshItem', [
 		'form_params' => [
 			'itemPath' => $itemPath,
 		],
-	]);
-}
+		]);
+	}
 
-public function renameRssRule(string $ruleName, string $newRuleName)
-{
-	return $this->request('POST', '/api/v2/rss/renameRule', [
+	public function renameRssRule(string $ruleName, string $newRuleName)
+	{
+		return $this->request('POST', '/api/v2/rss/renameRule', [
 		'form_params' => [
 			'ruleName' => $ruleName,
 			'newRuleName' => $newRuleName,
 		],
-	]);
-}
+		]);
+	}
 
-// undocumented on the wiki, found in RSSController::cloneRuleAction() (rsscontroller.cpp)
-public function cloneRssRule(string $sourceName, string $cloneName)
-{
-	return $this->request('POST', '/api/v2/rss/cloneRule', [
+	// undocumented on the wiki, found in RSSController::cloneRuleAction() (rsscontroller.cpp)
+	public function cloneRssRule(string $sourceName, string $cloneName)
+	{
+		return $this->request('POST', '/api/v2/rss/cloneRule', [
 		'form_params' => [
 			'sourceName' => $sourceName,
 			'cloneName' => $cloneName,
 		],
-	]);
-}
+		]);
+	}
 
-public function getMatchingArticles(string $ruleName): array
-{
-	return $this->request('GET', '/api/v2/rss/matchingArticles', [
+	public function getMatchingArticles(string $ruleName): array
+	{
+		return $this->request('GET', '/api/v2/rss/matchingArticles', [
 		'query' => [
 			'ruleName' => $ruleName,
 		],
-	]);
-}
+		]);
+	}
 
 	# search
-public function startSearch(string $pattern, string|array $plugins = 'all', string $category = 'all'): int
-{
-	$result = $this->request('POST', '/api/v2/search/start', [
+	public function startSearch(string $pattern, string|array $plugins = 'all', string $category = 'all'): int
+	{
+		$result = $this->request('POST', '/api/v2/search/start', [
 		'form_params' => [
 			'pattern' => $pattern,
 			'plugins' => implode('|', (array)$plugins),
 			'category' => $category,
 		],
-	]);
+		]);
 
-	return $result['id'];
-}
+		return $result['id'];
+	}
 
-public function stopSearch(int $id)
-{
-	return $this->request('POST', '/api/v2/search/stop', [
+	public function stopSearch(int $id)
+	{
+		return $this->request('POST', '/api/v2/search/stop', [
 		'form_params' => [
 			'id' => $id,
 		],
-	]);
-}
+		]);
+	}
 
-public function deleteSearch(int $id)
-{
-	return $this->request('POST', '/api/v2/search/delete', [
+	public function deleteSearch(int $id)
+	{
+		return $this->request('POST', '/api/v2/search/delete', [
 		'form_params' => [
 			'id' => $id,
 		],
-	]);
-}
+		]);
+	}
 
-public function getSearchStatus(?int $id = null): array
-{
-	return $this->requestDto('GET', '/api/v2/search/status', Status::class, [
+	public function getSearchStatus(?int $id = null): array
+	{
+		return $this->requestDto('GET', '/api/v2/search/status', Status::class, [
 		'query' => array_filter(['id' => $id], fn ($v) => $v !== null),
-	]);
-}
+		]);
+	}
 
-public function getSearchResults(int $id, ?int $limit = null, ?int $offset = null): array
-{
-	return $this->hydrateSearchResults($this->request('GET', '/api/v2/search/results', [
+	public function getSearchResults(int $id, ?int $limit = null, ?int $offset = null): array
+	{
+		return $this->hydrateSearchResults($this->request('GET', '/api/v2/search/results', [
 		'query' => array_filter(
 			['id' => $id, 'limit' => $limit, 'offset' => $offset],
 			fn ($v) => $v !== null,
 		),
-	]));
-}
+		]));
+	}
 
-private function hydrateSearchResults(array $data): array
-{
-	return [
+	private function hydrateSearchResults(array $data): array
+	{
+		return [
 		'results' => array_map(fn ($r) => new SearchResult($r, $this), $data['results']),
 		'status' => SearchStatus::from($data['status']),
 		'total' => $data['total'],
-	];
-}
+		];
+	}
 
-public function getSearchPlugins(): array
-{
-	return $this->requestDto('GET', '/api/v2/search/plugins', SearchPlugin::class);
-}
+	public function getSearchPlugins(): array
+	{
+		return $this->requestDto('GET', '/api/v2/search/plugins', SearchPlugin::class);
+	}
 
-public function installSearchPlugin(string|array $sources)
-{
-	return $this->request('POST', '/api/v2/search/installPlugin', [
+	public function installSearchPlugin(string|array $sources)
+	{
+		return $this->request('POST', '/api/v2/search/installPlugin', [
 		'form_params' => [
 			'sources' => implode("\n", (array)$sources),
 		],
-	]);
-}
+		]);
+	}
 
-public function uninstallSearchPlugin(string|array $names)
-{
-	return $this->request('POST', '/api/v2/search/uninstallPlugin', [
+	public function uninstallSearchPlugin(string|array $names)
+	{
+		return $this->request('POST', '/api/v2/search/uninstallPlugin', [
 		'form_params' => [
 			'names' => implode('|', (array)$names),
 		],
-	]);
-}
+		]);
+	}
 
-public function enableSearchPlugin(string|array $names, bool $enable)
-{
-	return $this->request('POST', '/api/v2/search/enablePlugin', [
+	public function enableSearchPlugin(string|array $names, bool $enable)
+	{
+		return $this->request('POST', '/api/v2/search/enablePlugin', [
 		'form_params' => [
 			'names' => implode('|', (array)$names),
 			'enable' => $enable ? 'true' : 'false',
 		],
-	]);
-}
+		]);
+	}
 
-public function updateSearchPlugins()
-{
-	return $this->request('POST', '/api/v2/search/updatePlugins');
-}
+	public function updateSearchPlugins()
+	{
+		return $this->request('POST', '/api/v2/search/updatePlugins');
+	}
 
-public function downloadSearchTorrent(string $torrentUrl, string $pluginName)
-{
-	return $this->request('POST', '/api/v2/search/downloadTorrent', [
+	public function downloadSearchTorrent(string $torrentUrl, string $pluginName)
+	{
+		return $this->request('POST', '/api/v2/search/downloadTorrent', [
 		'form_params' => [
 			'torrentUrl' => $torrentUrl,
 			'pluginName' => $pluginName,
 		],
-	]);
-}
+		]);
+	}
 
 	# torrentcreator
-public function createTorrentTask(string $sourcePath, array $options = []): string
-{
-	$result = $this->request('POST', '/api/v2/torrentcreator/addTask', [
+	public function createTorrentTask(string $sourcePath, array $options = []): string
+	{
+		$result = $this->request('POST', '/api/v2/torrentcreator/addTask', [
 		'form_params' => array_merge([
 			'sourcePath' => $sourcePath,
 		], $options),
-	]);
+		]);
 
-	return $result['taskID'] ?? '';
-}
+		return $result['taskID'] ?? '';
+	}
 
-public function getTorrentCreationStatus(?string $taskId = null): array
-{
-	return $this->request('GET', '/api/v2/torrentcreator/status', [
+	public function getTorrentCreationStatus(?string $taskId = null): array
+	{
+		return $this->request('GET', '/api/v2/torrentcreator/status', [
 		'query' => $taskId === null ? [] : ['taskID' => $taskId],
-	]);
-}
+		]);
+	}
 
-public function getTorrentCreationFile(string $taskId): string
-{
-	return $this->requestRaw('GET', '/api/v2/torrentcreator/torrentFile', [
+	public function getTorrentCreationFile(string $taskId): string
+	{
+		return $this->requestRaw('GET', '/api/v2/torrentcreator/torrentFile', [
 		'query' => ['taskID' => $taskId],
-	]);
-}
+		]);
+	}
 
-public function deleteTorrentCreationTask(string $taskId)
-{
-	return $this->request('POST', '/api/v2/torrentcreator/deleteTask', [
+	public function deleteTorrentCreationTask(string $taskId)
+	{
+		return $this->request('POST', '/api/v2/torrentcreator/deleteTask', [
 		'form_params' => [
 			'taskID' => $taskId,
 		],
-	]);
-}
+		]);
+	}
 
 	# helper
-protected function buildMultipartOptions(array $options)
-{
-	$multipart = [];
-
-	foreach ($options as $key => $value)
+	protected function buildMultipartOptions(array $options)
 	{
-		$multipart[] = [
+		$multipart = [];
+
+		foreach ($options as $key => $value)
+		{
+			$multipart[] = [
 			'name' => $key,
 			'contents' => $value,
-		];
+			];
+		}
+
+		return $multipart;
 	}
 
-	return $multipart;
-}
-
-protected function toDto(
+	protected function toDto(
 	string $class,
 	array $data,
-): object|array
-{
-	if (array_is_list($data))
+	): object|array
 	{
-		return array_map(
+		if (array_is_list($data))
+		{
+			return array_map(
 			fn ($v) => new $class($v, $this),
 			$data,
-		);
-	}
+			);
+		}
 
-	if (is_array(reset($data)))
-	{
-		return array_map(
+		if (is_array(reset($data)))
+		{
+			return array_map(
 			fn ($v) => new $class($v, $this),
 			$data,
-		);
+			);
+		}
+
+		return new $class($data, $this);
 	}
 
-	return new $class($data, $this);
-}
-
-protected function requestDto(
+	protected function requestDto(
 	string $method,
 	string $uri,
 	string $class,
 	array $options = [],
-): object|array
-{
-	return $this->toDto(
+	): object|array
+	{
+		return $this->toDto(
 		$class,
 		$this->request(
 			$method,
 			$uri,
 			$options,
 		),
-	);
-}
+		);
+	}
 }
 
