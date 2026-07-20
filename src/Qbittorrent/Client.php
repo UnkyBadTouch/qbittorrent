@@ -38,8 +38,8 @@ class Client
 	private string $password;
 
 	private Http $http;
-	private string $cookie = '';
-	private string $cookies_cache = __DIR__ . '/../../cache/cookies.json';
+	private string $authCookie = '';
+	private string $authCookieCache = __DIR__ . '/../../cache/cookies.json';
 
 	public function __construct(string $baseUri, string $username, string $password)
 	{
@@ -54,12 +54,12 @@ class Client
 		'verify'   => true,
 		]);
 
-		if (file_exists($this->cookies_cache))
+		if (file_exists($this->authCookieCache))
 		{
-			$cache = Helper::jsonDecode(file_get_contents($this->cookies_cache));
+			$cache = Helper::jsonDecode(file_get_contents($this->authCookieCache));
 			if ($cache['expires'] > time())
 			{
-				$this->cookie = $cache['cookie'];
+				$this->authCookie = $cache['cookie'];
 			}
 		}
 	}
@@ -89,12 +89,12 @@ class Client
 				throw new \Exception('Authentication failed: ' . $body . ' (' . $code . ')');
 			}
 			
-			$this->cookie = $response->getHeaderLine('Set-Cookie');
+			$this->authCookie = $response->getHeaderLine('Set-Cookie');
 
-			@mkdir(dirname($this->cookies_cache), recursive: true);
+			@mkdir(dirname($this->authCookieCache), recursive: true);
 
-			file_put_contents($this->cookies_cache, Helper::jsonEncode([
-				'cookie' => $this->cookie,
+			file_put_contents($this->authCookieCache, Helper::jsonEncode([
+				'cookie' => $this->authCookie,
 				'expires' => time() + 3600,
 			]));
 
@@ -108,7 +108,7 @@ class Client
 
 	private function checkAuthenticated(): void
 	{
-		if (!$this->cookie)
+		if (!$this->authCookie)
 		{
 			$this->login($this->username, $this->password);
 		}
@@ -118,7 +118,7 @@ class Client
 	{
 		$this->checkAuthenticated();
 
-		$options['headers']['Cookie'] = $this->cookie;
+		$options['headers']['Cookie'] = $this->authCookie;
 
 		try
 		{
@@ -131,7 +131,7 @@ class Client
 			// stale/expired session cookie — re-login once and retry
 			if ($retryOnAuthFailure && $e->getResponse()?->getStatusCode() === 403)
 			{
-				$this->cookie = '';
+				$this->authCookie = '';
 
 				return $this->requestRaw($method, $uri, $options, false);
 			}
@@ -219,8 +219,8 @@ class Client
 	public function logout()
 	{
 		$result = $this->request('POST', '/api/v2/auth/logout');
-		$this->cookie = '';
-		@unlink($this->cookies_cache);
+		$this->authCookie = '';
+		@unlink($this->authCookieCache);
 
 		return $result;
 	}
