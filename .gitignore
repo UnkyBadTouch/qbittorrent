@@ -1,7 +1,4 @@
 .superpowers/
 docs/superpowers/
-cache/
-logs/
-databases/
-*.local.php
-cookies.json
+vendor/
+composer.lock
