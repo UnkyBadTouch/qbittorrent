@@ -250,6 +250,148 @@ class Client
 	}
 
 	/**
+	 * Import cookies from a Cookie-Editor style JSON export (a JSON array of
+	 * {name, value, domain, path, expirationDate, ...} objects) and push them
+	 * to qBittorrent via setCookies.
+	 *
+	 * @return Cookie[] the imported cookies
+	 */
+	public function importCookiesJson(string $json, string|array $domains = []): array
+	{
+		$domains = array_map(fn ($d) => ltrim($d, '.'), (array) $domains);
+
+		$cookies = [];
+
+		foreach (Helper::jsonDecode($json) as $row)
+		{
+			if ($domains !== [] && !$this->cookieDomainMatches($row['domain'] ?? '', $domains))
+			{
+				continue;
+			}
+
+			$cookies[] = new Cookie($row);
+		}
+
+		if ($cookies !== [])
+		{
+			$this->setCookies($cookies);
+		}
+
+		return $cookies;
+	}
+
+	/**
+	 * Import cookies from a raw "name=value;name=value" Cookie header string.
+	 * The header carries no domain, so one must be supplied.
+	 *
+	 * @return Cookie[] the imported cookies
+	 */
+	public function importCookieHeader(string $header, string $domain, string $path = '/'): array
+	{
+		$cookies = [];
+
+		foreach (explode(';', $header) as $pair)
+		{
+			$pair = trim($pair);
+
+			if ($pair === '' || !str_contains($pair, '='))
+			{
+				continue;
+			}
+
+			[$name, $value] = explode('=', $pair, 2);
+
+			$cookies[] = new Cookie([
+				'name'   => trim($name),
+				'value'  => $value,
+				'domain' => $domain,
+				'path'   => $path,
+			]);
+		}
+
+		if ($cookies !== [])
+		{
+			$this->setCookies($cookies);
+		}
+
+		return $cookies;
+	}
+
+	/**
+	 * Import cookies from a Netscape/curl cookie file (as exported by
+	 * Cookie-Editor, wget, curl). Lines are tab-separated:
+	 * domain, includeSubdomains, path, secure, expiry, name, value.
+	 * The "#HttpOnly_" prefix on the domain is honoured; other comments skipped.
+	 *
+	 * @return Cookie[] the imported cookies
+	 */
+	public function importCurlCookies(string $contents, string|array $domains = []): array
+	{
+		$domains = array_map(fn ($d) => ltrim($d, '.'), (array) $domains);
+
+		$cookies = [];
+
+		foreach (explode("\n", $contents) as $line)
+		{
+			$line = rtrim($line, "\r");
+
+			if (str_starts_with($line, '#HttpOnly_'))
+			{
+				$line = substr($line, strlen('#HttpOnly_'));
+			}
+			elseif ($line === '' || $line[0] === '#')
+			{
+				continue;
+			}
+
+			$fields = explode("\t", $line);
+
+			if (count($fields) < 7)
+			{
+				continue;
+			}
+
+			[$domain, , $path, , $expiry, $name, $value] = $fields;
+
+			if ($domains !== [] && !$this->cookieDomainMatches($domain, $domains))
+			{
+				continue;
+			}
+
+			$cookies[] = new Cookie([
+				'name'           => $name,
+				'value'          => $value,
+				'domain'         => $domain,
+				'path'           => $path,
+				'expirationDate' => (int) $expiry,
+			]);
+		}
+
+		if ($cookies !== [])
+		{
+			$this->setCookies($cookies);
+		}
+
+		return $cookies;
+	}
+
+	/** @param array<string> $domains bare domains (no leading dot) */
+	private function cookieDomainMatches(string $domain, array $domains): bool
+	{
+		$domain = ltrim($domain, '.');
+
+		foreach ($domains as $d)
+		{
+			if ($domain === $d || str_ends_with($domain, '.' . $d) || str_contains($domain, $d))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Import cookies from a Chrome or Firefox cookie SQLite file (browser
 	 * must be closed — it locks the file) for the given domain(s), and push
 	 * them to qBittorrent via setCookies.
