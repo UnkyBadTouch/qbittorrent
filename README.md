@@ -1,4 +1,4 @@
-# blackout/qbbittorrent
+# unkybadtouch/qbbittorrent
 
 PHP client for the qBittorrent WebUI API v2 (5.0+), with a typed DTO layer
 over the raw JSON responses. UTF-8 safe, PHP 8.4 (uses property hooks).
@@ -23,7 +23,7 @@ foreach ($qb->getTorrents(['filter' => 'downloading']) as $torrent) {
 ## Install
 
 ```bash
-composer require blackout/qbbittorrent
+composer require unkybadtouch/qbbittorrent
 ```
 
 ## Quick start

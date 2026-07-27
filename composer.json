@@ -1,5 +1,5 @@
 {
-	"name": "blackout/qbbittorrent",
+	"name": "unkybadtouch/qbbittorrent",
 	"description": "Reusable qBittorrent client with UTF-8 safe handling",
 	"type": "library",
 	"require":

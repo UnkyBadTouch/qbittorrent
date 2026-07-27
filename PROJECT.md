@@ -50,6 +50,6 @@ which requires this package via a composer VCS dependency (split 2026-07-20).
 
 ## Git
 
-- Repo is git with a private GitHub origin (`UnkyBadTouch/qbittorrent`).
-- Consumed by `UnkyBadTouch/qbittorrent-tools` as a composer VCS dependency (`blackout/qbbittorrent`) — a breaking change here (namespace/signature) needs a bump + coordinated update on that side.
+- Repo is git with a public GitHub origin (`UnkyBadTouch/qbittorrent`), published on Packagist as `unkybadtouch/qbbittorrent` (the `blackout` vendor prefix was already taken by an unrelated party, so the composer name uses the GitHub username instead — PHP namespace stays `Blackout\Qbittorrent\*`, unaffected).
+- Consumed by `UnkyBadTouch/qbittorrent-tools` via Packagist (`unkybadtouch/qbbittorrent`) — a breaking change here (namespace/signature) needs a version bump + coordinated update on that side.
 - Coding style is tabs, not spaces, Allman braces. `phpcs.xml` lives in the `qbittorrent-tools` repo (shared house style, not duplicated here).
