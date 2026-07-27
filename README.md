@@ -86,6 +86,252 @@ un-fetched lazy relations are omitted).
 Any `Client` method taking a list (`$hashes`, `$tags`, `$urls`, ...) accepts
 either a bare string or an array — a single item doesn't need to be wrapped.
 
+## Usage examples
+
+These walk through real end-to-end flows, with particular attention to
+**nested DTOs** — DTOs that hold other DTOs, either eagerly (hydrated inline
+from the same response) or lazily (fetched from a separate endpoint on first
+property access).
+
+### 1. Add a magnet, poll until done, list its files
+
+```php
+use Blackout\Qbittorrent\Client;
+use Blackout\Qbittorrent\Enum\TorrentState;
+
+$qb = new Client('http://localhost:8080', 'admin', 'adminadmin');
+
+$qb->addTorrentUrls($magnetUri, [
+    'category' => 'linux',
+    'paused'   => 'false',
+    // never pass 'savepath' here (PROJECT.md gotcha — qBittorrent mishandles it
+    // on /torrents/add); set the save path after the add instead:
+    // $torrent->setSavePath('/data/downloads/linux')
+]);
+
+// addTorrentUrls()/addTorrentFile() don't return the new Torrent — the API
+// doesn't echo it back — so fetch it once you know the hash (magnet URIs
+// carry it in the `xt=urn:btih:...` param; for .torrent files, hash it
+// yourself or grep the newest entry in the category)
+$hash = strtolower(preg_match('/btih:([a-f0-9]{40})/i', $magnetUri, $m) ? $m[1] : '');
+
+do {
+    $torrent = $qb->getTorrents(['hashes' => $hash])[0] ?? null;
+    usleep(500_000);
+} while ($torrent === null || $torrent->state === TorrentState::META_DL);
+
+while (!$torrent->is_complete) {
+    sleep(2);
+    $torrent = $qb->getTorrents(['hashes' => $hash])[0];
+}
+
+echo "{$torrent->name} finished ({$torrent->size_human})\n";
+
+foreach ($torrent->files as $file) { // fires getTorrentFiles($hash) here, once
+    echo "  {$file->basename} ({$file->size_human})\n";
+}
+```
+
+### 2. Nested DTOs: walking every relation on a `Torrent`
+
+`Torrent` is the clearest nested-DTO case in the library: one hydrated object
+whose five collection properties are each backed by a *separate* API call,
+fetched lazily and cached per-instance.
+
+```php
+$torrent = $qb->getTorrents(['hashes' => $hash])[0];
+
+// Nothing below has fired a request yet — files/trackers/peers/pieces/webseeds
+// are declared as hooked `get` properties (Torrent.php), not hydrated fields.
+
+foreach ($torrent->files as $file) {          // -> Client::getTorrentFiles($hash)
+    printf("  [%d] %-40s %6.2f%% prio=%s\n",
+        $file->index, $file->basename, $file->progress_percent, $file->priority->label());
+}
+
+foreach ($torrent->trackers as $tracker) {    // -> Client::getTorrentTrackers($hash)
+    printf("  %-50s %s (%s)\n", $tracker->url, $tracker->status->label(), $tracker->msg);
+}
+
+foreach ($torrent->peers as $peer) {          // -> Client::getTorrentPeers($hash)
+    printf("  %-15s:%-5d %-20s %5.1f%%\n", $peer->ip, $peer->port, $peer->client, $peer->progress * 100);
+}
+
+$piecesHave = count(array_filter($torrent->pieces, fn ($p) => $p->is_downloaded)); // -> Client::getTorrentPiecesStates($hash)
+echo "{$piecesHave}/{$torrent->pieces_num} pieces\n";
+
+foreach ($torrent->webseeds as $seed) {       // -> Client::getTorrentWebSeeds($hash)
+    echo "  {$seed->url}\n";
+}
+
+// Second access to any of these is free — cached in $torrent->_relations
+$torrent->files; // no request
+
+// Mutating through a relation invalidates its own cache so the next read refetches:
+$torrent->addTrackers('udp://new-tracker.example.com:80');
+$torrent->trackers; // -> Client::getTorrentTrackers($hash) again, includes the new one
+```
+
+`Torrent::$downloadable_files` is a computed nested-DTO filter — it reads
+`$this->files` (triggering the same lazy fetch) and drops anything with
+`FilePriority::DO_NOT_DOWNLOAD`:
+
+```php
+$toGrab = array_sum(array_map(fn ($f) => $f->size, $torrent->downloadable_files));
+echo "Will download " . \Blackout\Helper::filesize($toGrab) . "\n";
+```
+
+### 3. Nested DTOs inside a plain array: the RSS feed/folder tree
+
+Unlike `Torrent`'s relations (DTO holding DTOs via lazy fetch), `getRssFeeds()`
+returns one *eagerly* hydrated structure where `Feed` DTOs are interleaved with
+plain PHP arrays (folders have no DTO of their own) at arbitrary depth:
+
+```php
+use Blackout\Qbittorrent\DTO\Rss\Feed;
+
+function walkRssTree(array $node, string $indent = ''): void
+{
+    foreach ($node as $name => $item) {
+        if ($item instanceof Feed) {
+            // hasError/isLoading/title etc. are only initialized when fetched
+            // with withData=true — accessing them otherwise throws (uninitialized
+            // typed property), so guard with isInitialized-style try/catch or,
+            // as here, only read them when you know withData was passed
+            $status = $item->hasError ? 'ERROR' : 'ok';
+            echo "{$indent}{$name}  [{$item->url}]  {$status}\n";
+        } else {
+            echo "{$indent}{$name}/\n";
+            walkRssTree($item, $indent . '    '); // recurse into the folder
+        }
+    }
+}
+
+walkRssTree($qb->getRssFeeds(['withData' => true]));
+
+// Direct access once you know the path:
+$feed = $qb->getRssFeeds()['tech']['linux-distros'];
+$feed->setRefreshInterval(1800);
+```
+
+Each `Feed`, however deep in the tree, still knows its own full backslash-joined
+`path` (e.g. `tech\linux-distros`) because `Client::hydrateRssItems()` threads
+it through the recursion during hydration — that's the one field on `Feed`
+that isn't a real API value (see the DTO reference below).
+
+### 4. Two-level nested flow: search status → search results
+
+```php
+use Blackout\Qbittorrent\Enum\SearchStatus;
+
+$id = $qb->startSearch('debian netinst iso', plugins: 'all', category: 'all');
+
+do {
+    sleep(1);
+    $status = $qb->getSearchStatus($id)[0]; // Search\Status
+} while ($status->status === SearchStatus::RUNNING);
+
+echo "{$status->total} results\n";
+
+foreach ($status->results(limit: 25) as $result) { // Search\Result[], via Status::results()
+    printf("%-60s %5d seeds  %s\n", $result->fileName, $result->nbSeeders, $result->engineName);
+
+    if ($result->nbSeeders > 10 && str_contains($result->fileName, 'netinst')) {
+        $result->download(); // -> Client::downloadSearchTorrent()
+    }
+}
+
+$status->delete(); // after this, don't call getSearchStatus($id) again — the id 404s
+```
+
+### 5. RSS rules: reading and rewriting the nested `torrentParams` array
+
+`Rss\Rule::$torrentParams` is a raw nested array (the API's modern
+add-torrent-options payload), and four legacy top-level properties are
+one-way mirrors into it:
+
+```php
+$rule = $qb->getRssRules()['tv-releases'];
+
+var_dump($rule->torrentParams);
+// ['category' => 'tv', 'save_path' => '/data/tv', 'content_layout' => 'Original', ...]
+
+$rule->assignedCategory = 'anime';        // also sets $rule->torrentParams['category'] = 'anime'
+$rule->torrentParams['save_path'] = '/data/anime'; // or write the nested array directly — same effect
+
+$rule->save(); // POSTs jsonSerialize() (minus the synthesized `name`) to setRule
+```
+
+### 6. Categories and torrents together
+
+```php
+$qb->createCategory('archived', savePath: '/data/archive');
+
+foreach ($qb->getTorrentsByCategory('linux') as $torrent) {
+    if ($torrent->is_complete && $torrent->ratio >= 2.0) {
+        $torrent->setCategory('archived');   // Client::setTorrentCategory + local field update
+        $torrent->setSavePath('/data/archive');
+    }
+}
+
+$categories = $qb->getCategories();          // string-keyed array of Category
+echo $categories['archived']->savePath;      // "/data/archive"
+$categories['archived']->edit(savePath: '/data/archive/linux'); // moves + updates local field
+```
+
+### 7. Serializing nested DTOs to JSON
+
+`jsonSerialize()` only emits properties that are actually initialized/loaded
+— lazy relations you never touched are simply absent, not `null`:
+
+```php
+$torrent = $qb->getTorrents(['hashes' => $hash])[0];
+
+echo json_encode($torrent, JSON_PRETTY_PRINT);
+// { "hash": "...", "name": "...", ... }  <- no "files"/"trackers"/etc. keys yet
+
+$torrent->files; // triggers the fetch
+
+echo json_encode($torrent, JSON_PRETTY_PRINT);
+// { "hash": "...", ..., "files": [ { "index": 0, "name": "...", ... }, ... ] }
+// nested Torrent\File DTOs serialize themselves too — jsonSerialize() recurses naturally
+```
+
+### 8. Paging through the log instead of refetching everything
+
+```php
+$lastId = -1;
+$allMessages = [];
+
+do {
+    $batch = $qb->getLog(['last_known_id' => $lastId]); // Log\Message[]
+    $allMessages = [...$allMessages, ...$batch];
+    $lastId = end($batch)?->id ?? $lastId;
+} while (count($batch) > 0 && count($allMessages) < 5000);
+```
+
+### 9. Error handling
+
+Every network/auth failure surfaces as a plain `\Exception` (Guzzle exceptions
+are caught and rethrown, not passed through), and `addTorrentUrls()`/`addTorrentFile()`
+explicitly throw when qBittorrent reports zero torrents added:
+
+```php
+try {
+    $qb->addTorrentUrls($url);
+} catch (\Exception $e) {
+    // message is either the raw text/JSON body qBittorrent returned,
+    // or an extracted error/message/reason field — see describeAddTorrentFailure()
+    error_log("Add failed: {$e->getMessage()}");
+}
+
+try {
+    $qb = (new Client($baseUri, $username, $wrongPassword))->login($username, $wrongPassword);
+} catch (\Exception $e) {
+    // "Authentication failed: ... (403)"
+}
+```
+
 ## DTO reference
 
 ### `Torrent` (`DTO\Torrent`)
