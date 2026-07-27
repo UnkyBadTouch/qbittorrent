@@ -22,22 +22,8 @@ foreach ($qb->getTorrents(['filter' => 'downloading']) as $torrent) {
 
 ## Install
 
-This is a private repo, so add it as a VCS source in the consuming project's
-`composer.json`:
-
-```json
-{
-    "repositories": [
-        { "type": "vcs", "url": "git@github.com:UnkyBadTouch/qbittorrent.git" }
-    ],
-    "require": {
-        "blackout/qbbittorrent": "dev-master"
-    }
-}
-```
-
 ```bash
-composer require blackout/qbbittorrent:dev-master
+composer require blackout/qbbittorrent
 ```
 
 ## Quick start
