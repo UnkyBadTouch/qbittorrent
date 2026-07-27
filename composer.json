@@ -4,7 +4,7 @@
 	"type": "library",
 	"require":
 	{
-		"php": ">=7.2",
+		"php": ">=8.4",
 		"guzzlehttp/guzzle": "^7.0",
 		"ext-mbstring": "*",
 		"hassankhan/config": "^3.2"

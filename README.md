@@ -15,8 +15,7 @@ foreach ($qb->getTorrents(['filter' => 'downloading']) as $torrent) {
 
 ## Requirements
 
-- PHP >= 8.4 (property hooks are used throughout the DTO layer; `composer.json`
-  says `>=7.2` but that's stale — the code will fatal on anything older)
+- PHP >= 8.4 (property hooks are used throughout the DTO layer)
 - ext-mbstring
 - guzzlehttp/guzzle ^7.0
 - hassankhan/config ^3.2
