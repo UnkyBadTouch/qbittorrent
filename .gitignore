@@ -2,3 +2,16 @@
 docs/superpowers/
 vendor/
 composer.lock
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+graft/
+
+# PHPUnit's result cache and coverage reports.
+.phpunit.cache/
+build/
+coverage/
+
+# Client's default cookie cache — holds a live qBittorrent session token.
+cache/
+cookies.json
+*.local.php

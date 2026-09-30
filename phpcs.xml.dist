@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<ruleset name="qbbittorrent">
+	<description>PSR-12 coding standard, scoped to the test suite.</description>
+
+	<file>tests</file>
+
+	<arg name="colors"/>
+	<arg name="basepath" value="."/>
+	<arg value="sp"/>
+
+	<rule ref="PSR12"/>
+
+	<!--
+		PSR-12 permits tabs (indentation is left to the implementation as long
+		as it is consistent within a file), but the bundled PSR12 ruleset
+		carries Generic.WhiteSpace.DisallowTabIndent, which forbids them
+		outright. The codebase indents with tabs throughout, so enforcing
+		spaces here would reformat every test to a style the rest of the repo
+		does not use.
+	-->
+	<rule ref="Generic.WhiteSpace.DisallowTabIndent">
+		<severity>0</severity>
+	</rule>
+
+	<!--
+		PHP 8.4 property hooks are misparsed by this sniff: it reads
+		`public array $files { get => ...; }` as a property named "$this" and
+		reports "more than one property per statement" plus a missing
+		visibility. Verified against PHP_CodeSniffer 3.13.6 and 4.0.4, so
+		waiting for an upstream fix is the only way to get it back. Plain
+		properties are unaffected, so the cost is losing a check that only
+		mattered for multi-property declarations.
+	-->
+	<rule ref="PSR2.Classes.PropertyDeclaration">
+		<severity>0</severity>
+	</rule>
+
+	<rule ref="Generic.Files.LineLength">
+		<properties>
+			<property name="lineLimit" value="140"/>
+			<property name="absoluteLineLimit" value="0"/>
+		</properties>
+	</rule>
+</ruleset>
